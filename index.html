@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Universal TV Remote</title>
+  <link rel="stylesheet" href="remote.css" />
+</head>
+<body>
+  <div class="remote">
+    <div class="brand">📺 TV Remote</div>
+
+    <!-- Power & Input -->
+    <div class="row">
+      <button class="btn red" data-action="power">⏻</button>
+      <button class="btn" data-action="input">INPUT</button>
+      <button class="btn" data-action="mute">🔇</button>
+    </div>
+
+    <!-- Number pad -->
+    <div class="numpad">
+      <button class="btn" data-action="1">1</button>
+      <button class="btn" data-action="2">2</button>
+      <button class="btn" data-action="3">3</button>
+      <button class="btn" data-action="4">4</button>
+      <button class="btn" data-action="5">5</button>
+      <button class="btn" data-action="6">6</button>
+      <button class="btn" data-action="7">7</button>
+      <button class="btn" data-action="8">8</button>
+      <button class="btn" data-action="9">9</button>
+      <button class="btn" data-action="prev-ch">PREV</button>
+      <button class="btn" data-action="0">0</button>
+      <button class="btn" data-action="guide">GUIDE</button>
+    </div>
+
+    <!-- Volume & Channel -->
+    <div class="row">
+      <div class="col-label">VOL</div>
+      <div class="col-label">CH</div>
+    </div>
+    <div class="row">
+      <button class="btn large" data-action="vol-up">＋</button>
+      <button class="btn large" data-action="ch-up">▲</button>
+    </div>
+    <div class="row">
+      <button class="btn large" data-action="vol-down">－</button>
+      <button class="btn large" data-action="ch-down">▼</button>
+    </div>
+
+    <!-- D-Pad -->
+    <div class="dpad">
+      <button class="btn dpad-up" data-action="up">▲</button>
+      <button class="btn dpad-left" data-action="left">◀</button>
+      <button class="btn dpad-ok" data-action="ok">OK</button>
+      <button class="btn dpad-right" data-action="right">▶</button>
+      <button class="btn dpad-down" data-action="down">▼</button>
+    </div>
+
+    <!-- Menu row -->
+    <div class="row">
+      <button class="btn" data-action="menu">MENU</button>
+      <button class="btn" data-action="home">⌂</button>
+      <button class="btn" data-action="back">↩</button>
+    </div>
+
+    <!-- Playback controls -->
+    <div class="row">
+      <button class="btn" data-action="rewind">⏮</button>
+      <button class="btn blue" data-action="play-pause">⏯</button>
+      <button class="btn" data-action="fast-forward">⏭</button>
+    </div>
+
+    <!-- Color buttons -->
+    <div class="row color-row">
+      <button class="btn color red-btn" data-action="red">■</button>
+      <button class="btn color green-btn" data-action="green">■</button>
+      <button class="btn color yellow-btn" data-action="yellow">■</button>
+      <button class="btn color blue-btn" data-action="blue-btn">■</button>
+    </div>
+
+    <!-- Feedback display -->
+    <div class="feedback" id="feedback"></div>
+  </div>
+
+  <script src="remote.js"></script>
+</body>
+</html>

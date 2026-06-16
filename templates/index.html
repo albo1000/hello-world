@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Nearby Phone Detector</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #0f0f1a;
+      color: #e0e0f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem;
+    }
+
+    h1 {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      color: #a78bfa;
+    }
+
+    .subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 2rem;
+    }
+
+    #scan-btn {
+      background: #7c3aed;
+      color: #fff;
+      border: none;
+      border-radius: 2rem;
+      padding: 0.75rem 2.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, transform 0.1s;
+      margin-bottom: 1.5rem;
+    }
+
+    #scan-btn:hover:not(:disabled) { background: #6d28d9; }
+    #scan-btn:active:not(:disabled) { transform: scale(0.97); }
+    #scan-btn:disabled { background: #4b5563; cursor: not-allowed; }
+
+    #status {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      margin-bottom: 1.5rem;
+      min-height: 1.2rem;
+    }
+
+    .pulse { animation: pulse 1.2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+
+    #device-list {
+      width: 100%;
+      max-width: 600px;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+    }
+
+    .device-card {
+      background: #1e1e30;
+      border: 1px solid #2d2d48;
+      border-radius: 1rem;
+      padding: 1rem 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:none} }
+
+    .signal-icon {
+      font-size: 1.8rem;
+      flex-shrink: 0;
+      width: 2.5rem;
+      text-align: center;
+    }
+
+    .device-info { flex: 1; min-width: 0; }
+
+    .device-name {
+      font-weight: 600;
+      font-size: 1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      color: #e0e0f0;
+    }
+
+    .device-address {
+      font-size: 0.75rem;
+      color: #6b7280;
+      font-family: monospace;
+      margin-top: 0.15rem;
+    }
+
+    .signal-badge {
+      font-size: 0.75rem;
+      font-weight: 600;
+      padding: 0.2rem 0.6rem;
+      border-radius: 999px;
+      flex-shrink: 0;
+    }
+
+    .signal-badge.Strong  { background:#14532d; color:#4ade80; }
+    .signal-badge.Good    { background:#1c3a5e; color:#60a5fa; }
+    .signal-badge.Weak    { background:#3b2a00; color:#fbbf24; }
+    .signal-badge.very-weak { background:#3b1818; color:#f87171; }
+    .signal-badge.Unknown { background:#2d2d48; color:#9ca3af; }
+
+    .rssi {
+      font-size: 0.8rem;
+      color: #6b7280;
+      text-align: right;
+      flex-shrink: 0;
+      width: 4rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      color: #4b5563;
+      padding: 3rem 0;
+    }
+    .empty-state .icon { font-size: 3rem; margin-bottom: 0.5rem; }
+  </style>
+</head>
+<body>
+  <h1>Nearby Phone Detector</h1>
+  <p class="subtitle">Scans for Bluetooth LE devices in range</p>
+
+  <button id="scan-btn" onclick="startScan()">Scan Now</button>
+  <p id="status"></p>
+
+  <div id="device-list">
+    <div class="empty-state">
+      <div class="icon">&#x1F4F1;</div>
+      <p>Press "Scan Now" to find nearby devices</p>
+    </div>
+  </div>
+
+  <script>
+    let pollInterval = null;
+
+    function signalIcon(label) {
+      return { Strong: "&#x1F7E2;", Good: "&#x1F535;", Weak: "&#x1F7E1;", "Very Weak": "&#x1F534;" }[label] || "&#x26AA;";
+    }
+
+    function badgeClass(label) {
+      return label === "Very Weak" ? "very-weak" : label;
+    }
+
+    function renderDevices(devices) {
+      const list = document.getElementById("device-list");
+      if (!devices.length) {
+        list.innerHTML = '<div class="empty-state"><div class="icon">&#x1F50D;</div><p>No devices found. Try again.</p></div>';
+        return;
+      }
+      list.innerHTML = devices.map(d => `
+        <div class="device-card">
+          <div class="signal-icon">${signalIcon(d.signal)}</div>
+          <div class="device-info">
+            <div class="device-name">${escapeHtml(d.name)}</div>
+            <div class="device-address">${escapeHtml(d.address)}</div>
+          </div>
+          <span class="signal-badge ${badgeClass(d.signal)}">${d.signal}</span>
+          <div class="rssi">${d.rssi != null ? d.rssi + " dBm" : "—"}</div>
+        </div>
+      `).join("");
+    }
+
+    function escapeHtml(str) {
+      return String(str).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+    }
+
+    async function startScan() {
+      const btn = document.getElementById("scan-btn");
+      const status = document.getElementById("status");
+      btn.disabled = true;
+      status.textContent = "Scanning… (5 seconds)";
+      status.classList.add("pulse");
+
+      clearInterval(pollInterval);
+
+      try {
+        await fetch("/scan");
+      } catch (e) {
+        status.textContent = "Error starting scan.";
+        status.classList.remove("pulse");
+        btn.disabled = false;
+        return;
+      }
+
+      pollInterval = setInterval(async () => {
+        try {
+          const res = await fetch("/results");
+          const data = await res.json();
+          if (data.status === "idle") {
+            clearInterval(pollInterval);
+            status.classList.remove("pulse");
+            const count = data.devices.length;
+            status.textContent = count
+              ? `Found ${count} device${count > 1 ? "s" : ""} nearby`
+              : "Scan complete — no devices found";
+            btn.disabled = false;
+            renderDevices(data.devices);
+          }
+        } catch (e) {}
+      }, 500);
+    }
+  </script>
+</body>
+</html>
